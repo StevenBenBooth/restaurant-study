@@ -1,0 +1,2 @@
+This is the code for producing a quick little study of restaurants across the United States. I'm going to use Google's Places API in conjunction with US Census data to look at the relationship between the distribution of restaurant cuisine types and location demographics.
+Note that there are significant restrictions on the caching of information from the Google API, so be sure to read the terms of service if you choose to do something similar.

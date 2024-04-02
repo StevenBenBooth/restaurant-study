@@ -28,27 +28,31 @@ class CumulativeCol:
         try:
             self.current = self.agg_fun(self.current, self.values[self.index])
             self.index += 1
-        except IndexError as e:
+        except KeyError as e:
             raise StopIteration
         return self.current
 
 
-def plot_cumulative_pop():
+def plot_cumulative_pop(desired_prop=0.8):
+    assert 0 <= desired_prop < 1, "desired_prop should be in [0,1)"
     cleaned_path = os.path.join(config["raw-datasets"], nm["census"]["cleaned"])
     df = pd.read_csv(cleaned_path, usecols=["Jul. 1 2022 pop. est."])
     df.columns = ["Population"]
     xs = df.index
-    ys = CumulativeCol(df["Population"])
-    ys = ys.values / df["Population"].sum()
-    print(ys)
+    ys = np.array(list(CumulativeCol(df["Population"])))
+    ys = ys / df["Population"].sum()
+
     fig, ax = plt.subplots()
     ax.plot(xs, ys)
     fig.title = "Cumulative Population vs City Population Rank"
     fig.xlabel = "City Population Rank"
     fig.ylabel = "Cumulative Population"
-    ax.axhline(y=0.8)
 
-    fig.show()
+    ax.axhline(y=desired_prop, c="green", ls="--")
+    sufficient_count = np.where(ys > desired_prop)[0][0]
+    ax.axvline(x=sufficient_count, c="red", ls="--")
+    print(sufficient_count)
+    plt.show()
 
 
 if __name__ == "__main__":

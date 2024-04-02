@@ -1,19 +1,26 @@
-import os, json, googlemaps
+import os, json
 from os.path import join
 
-FRESH_REQ = False
+from eda import get_cumulative_cutoff
+from helpers import census_df, gmaps
+
+
 cache_location = join(os.getcwd(), "cached_res.json")
+CACHE = False
 
-if FRESH_REQ:
-    with open(join(os.getcwd(), "keys.json")) as f:
-        GMAPS_KEY = json.load(f)["places-key"]
 
-    gmaps = googlemaps.Client(key=GMAPS_KEY)
+def make_request(location):
+    result = gmaps.places(f"restaurants in {location}", type="restaurant")
+    if CACHE:
+        with open(cache_location, "w") as f:
+            json.dump(result, f)
+    return result
 
-    result = gmaps.places("restaurants in rochester city, NY, USA", type="restaurant")
-    with open(cache_location, "w") as f:
-        json.dump(result, f)
-else:
-    with open(cache_location, "r") as f:
-        result = json.load(f)
-        print(result)
+
+def multi_request(num):
+    names = census_df[["Geographic area"]].iloc[:num]
+    print(names)
+
+
+if __name__ == "__main__":
+    multi_request(num=100)

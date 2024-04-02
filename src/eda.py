@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from clean_helpers import config, nm
+from helpers import census_df
 
 
 # TODO: refactor; this is just a fold iterator
@@ -33,14 +33,24 @@ class CumulativeCol:
         return self.current
 
 
+def get_cumulative_cutoff(cumulative_vals, desired_prop=0.8):
+    """returns the index `rank` which captures at least the `desired_prop` of total values"""
+    assert 0 <= desired_prop < 1, "desired_prop should be in [0,1)"
+    ys = np.array(list(cumulative_vals))
+    proportions = ys / ys[-1]
+    assert np.isclose(
+        proportions[-1], 1.0
+    ), f"The final captured propotion should be 1, but is {proportions[-1]}"
+    return proportions, np.where(proportions > desired_prop)[0][0]
+
+
 def plot_cumulative_pop(desired_prop=0.8):
     assert 0 <= desired_prop < 1, "desired_prop should be in [0,1)"
-    cleaned_path = os.path.join(config["raw-datasets"], nm["census"]["cleaned"])
-    df = pd.read_csv(cleaned_path, usecols=["Jul. 1 2022 pop. est."])
-    df.columns = ["Population"]
+    df = census_df[["Jul. 1 2022 pop. est."]].rename(
+        columns={"Jul. 1 2022 pop. est.": "Population"}
+    )
     xs = df.index
-    ys = np.array(list(CumulativeCol(df["Population"])))
-    ys = ys / df["Population"].sum()
+    ys, cutoff = get_cumulative_cutoff(CumulativeCol(df["Population"]), desired_prop)
 
     fig, ax = plt.subplots()
     ax.plot(xs, ys)
@@ -49,9 +59,8 @@ def plot_cumulative_pop(desired_prop=0.8):
     fig.ylabel = "Cumulative Population"
 
     ax.axhline(y=desired_prop, c="green", ls="--")
-    sufficient_count = np.where(ys > desired_prop)[0][0]
-    ax.axvline(x=sufficient_count, c="red", ls="--")
-    print(sufficient_count)
+    ax.axvline(x=cutoff, c="red", ls="--")
+    print(cutoff)
     plt.show()
 
 

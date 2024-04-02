@@ -1,4 +1,7 @@
 .venv/
+__pycache__
 
 filepaths.json
 keys.json
+cached_res.json
+cached_location_res
